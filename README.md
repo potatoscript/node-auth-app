@@ -187,4 +187,153 @@ This way, your frontend can **send data to your backend**, and the backend will 
 
 ---
 
+## Next Steps: To include a table for displaying the user data.
+
+### Updated HTML (index.html):
+
+Add a `<table>` where the user data will be displayed:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Auth App</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    label, input { display: block; margin-bottom: 1em; }
+    button { padding: 0.5em 1em; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧑‍💻 Register</h1>
+  <form id="register-form">
+    <label>
+      Username:
+      <input type="text" id="username" required />
+    </label>
+    <label>
+      Password:
+      <input type="password" id="password" required />
+    </label>
+    <button type="submit">Register</button>
+  </form>
+
+  <h2>Registered Users</h2>
+  <table id="users-table">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Password</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- User data will be populated here -->
+    </tbody>
+  </table>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
+```
+
+### Updated JavaScript (main.js):
+
+Modify the JavaScript to fetch the users' data from the backend and populate the table:
+
+```javascript
+document.getElementById('register-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!username || !password) {
+    alert('Please fill out both fields.');
+    return;
+  }
+
+  const payload = {
+    username: username,
+    password: password
+  };
+
+  try {
+    const response = await fetch('http://localhost:3000/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      alert('Registration submitted successfully!');
+      loadUsers();  // Reload the table with updated users
+    } else {
+      alert('Failed to submit registration.');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred.');
+  }
+});
+
+// Function to load users and display them in the table
+async function loadUsers() {
+  try {
+    const response = await fetch('http://localhost:3000/users');
+    const users = await response.json();
+
+    const tableBody = document.querySelector('#users-table tbody');
+    tableBody.innerHTML = '';  // Clear the existing table rows
+
+    // Populate the table with user data
+    users.forEach(user => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${user.username}</td>
+        <td>${user.password}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    alert('Failed to load user data.');
+  }
+}
+
+// Load users when the page is first loaded
+window.onload = loadUsers;
+```
+
+### Explanation of Changes:
+1. **HTML**: Added a `<table>` to display the user data. The table will automatically update with the data when the page loads.
+2. **JavaScript**:
+   - **`loadUsers` function**: Fetches the user data from your backend (`/users` route) and populates the table with the fetched data.
+   - **Table Update**: When the registration form is submitted, it triggers the `loadUsers()` function to refresh the table with the latest data.
+   - **`window.onload`**: Ensures the table is populated as soon as the page is loaded.
+
+### How It Works:
+- When the page loads, the `loadUsers` function is called, which fetches the user data from your backend and populates the table.
+- When a new user is registered, the table is updated to reflect the new data.
+
+### Testing:
+1. Ensure your backend is running.
+2. Open your browser and reload the page.
+3. You should now see the list of registered users displayed in the table.
+
 
