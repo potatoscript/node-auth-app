@@ -7,6 +7,8 @@
     body { font-family: sans-serif; margin: 2em; }
     label, input { display: block; margin-bottom: 1em; }
     button { padding: 0.5em 1em; }
+    table { margin-top: 2em; border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 0.5em; text-align: left; }
   </style>
 </head>
 <body>
@@ -22,6 +24,19 @@
     </label>
     <button type="submit">Register</button>
   </form>
+
+  <h2>📄 Registered Users</h2>
+  <table id="users-table">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Password</th> <!-- Warning: For learning only! Don't show passwords publicly in real apps! -->
+      </tr>
+    </thead>
+    <tbody>
+      <!-- User rows will be inserted here by JavaScript -->
+    </tbody>
+  </table>
 
   <script src="js/main.js"></script>
 </body>
