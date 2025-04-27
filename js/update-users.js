@@ -6,7 +6,7 @@ const path = require('path');
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 // GitHub repository URL
-const GITHUB_API_URL = 'https://api.github.com/repos/heartlanguage2024/auth-app-github/issues';
+const GITHUB_API_URL = 'https://api.github.com/repos/potatoscript/node-auth-app/issues';
 
 async function updateUsersJson() {
   try {
@@ -48,7 +48,7 @@ async function updateUsersJson() {
 
     // GitHub API request to close the issue
     await axios.patch(
-      `https://api.github.com/repos/heartlanguage2024/auth-app-github/issues/${issueNumber}`,
+      `https://api.github.com/repos/potatoscript/node-auth-app/issues/${issueNumber}`,
       closeIssueData,
       {
         headers: {
