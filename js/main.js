@@ -39,25 +39,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  async function loadUsers() {
-    try {
-      const response = await fetch('users.json'); // assuming users.json is available publicly
-      if (!response.ok) throw new Error('Could not fetch users.json');
+// Function to load users and display them in the table
+async function loadUsers() {
+  try {
+    const response = await fetch('http://localhost:3000/users');
+    const users = await response.json();
 
-      const users = await response.json();
-      const tbody = document.getElementById('users-table').querySelector('tbody');
-      tbody.innerHTML = '';
+    const tableBody = document.querySelector('#users-table tbody');
+    tableBody.innerHTML = '';  // Clear the existing table rows
 
-      users.forEach(user => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${user.username}</td><td>${user.password}</td>`;
-        tbody.appendChild(tr);
-      });
-    } catch (error) {
-      console.error('Error loading users:', error);
-    }
+    // Populate the table with user data
+    users.forEach(user => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${user.username}</td>
+        <td>${user.password}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    alert('Failed to load user data.');
   }
+}
 
-  // Load users immediately when page loads
-  loadUsers();
+// Load users when the page is first loaded
+window.onload = loadUsers;
 });
