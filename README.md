@@ -3,7 +3,7 @@
 - ✅ A simple HTML form  
 - ✅ GitHub Issues to "register" a user  
 - ✅ GitHub Actions to write that user into `data/users.json`  
-- ✅ With node local backend
+- ✅ With node express server as local backend
 
 ---
 
