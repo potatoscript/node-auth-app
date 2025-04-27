@@ -3,22 +3,25 @@
 - ✅ A simple HTML form  
 - ✅ GitHub Issues to "register" a user  
 - ✅ GitHub Actions to write that user into `data/users.json`  
-- ✅ No backend, no database, no credit card — just GitHub Pages + GitHub Actions 💖
+- ✅ With node local backend
 
 ---
 
 ### 🗂 Folder Structure
 
 ```
-your-auth-app/
+node-auth-app/
 ├── index.html
 ├── js/
 │   └── main.js
+|   └── update-users.js
 ├── data/
 │   └── users.json
-└── .github/
-    └── workflows/
-        └── update-users.yml
+├── .github/
+|   └── workflows/
+|       └── update-users.yml
+├── package.json
+└── package-lock.json
 ```
 
 ---
@@ -61,7 +64,7 @@ your-auth-app/
 ### 🟨 `js/main.js`
 
 ```js
-document.getElementById('register-form').addEventListener('submit', function (e) {
+document.getElementById('register-form').addEventListener('submit', async function (e) {
   e.preventDefault();
 
   const username = document.getElementById('username').value.trim();
@@ -72,12 +75,31 @@ document.getElementById('register-form').addEventListener('submit', function (e)
     return;
   }
 
-  const issueTitle = encodeURIComponent(`New Registration: ${username}`);
-  const issueBody = encodeURIComponent(`Please register this user:\n\n- Username: ${username}\n- Password: ${password}`);
-  const issueUrl = `https://github.com/YOUR_USERNAME/YOUR_REPO/issues/new?title=${issueTitle}&body=${issueBody}`;
+  const payload = {
+    username: username,
+    password: password
+  };
 
-  window.open(issueUrl, '_blank');
+  try {
+    const response = await fetch('http://localhost:3000/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      alert('Registration submitted successfully!');
+    } else {
+      alert('Failed to submit registration.');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred.');
+  }
 });
+
 ```
 
 > 🔧 Replace `YOUR_USERNAME` and `YOUR_REPO` with your actual GitHub username and repository name.
@@ -97,58 +119,55 @@ document.getElementById('register-form').addEventListener('submit', function (e)
 ### 🟦 `.github/workflows/update-users.yml`
 
 ```yaml
-name: Save User from Issue
+name: Update Users JSON
 
 on:
   issues:
-    types: [opened]
-
-permissions:
-  contents: write
+    types: [opened]  # Trigger action when an issue is created
 
 jobs:
-  save-user:
+  update-users-json:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+      # Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Parse Issue
-        id: parse
-        run: |
-          echo "${{ github.event.issue.body }}" > body.txt
-          username=$(grep 'Username:' body.txt | awk -F': ' '{print $2}')
-          password=$(grep 'Password:' body.txt | awk -F': ' '{print $2}')
-          echo "username=$username" >> $GITHUB_OUTPUT
-          echo "password=$password" >> $GITHUB_OUTPUT
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-      - name: Add to users.json
-        run: |
-          mkdir -p data
-          if [ ! -f data/users.json ]; then echo "[]" > data/users.json; fi
-          jq --arg u "${{ steps.parse.outputs.username }}" --arg p "${{ steps.parse.outputs.password }}" \
-             '. += [{"username": $u, "password": $p}]' data/users.json > tmp.json
-          mv tmp.json data/users.json
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
 
-      - name: Commit
+      # Run the script to update the JSON file
+      - name: Update users.json file
+        run: node js/update-users.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Pass the secret to the script
+
+      # Commit and push changes to GitHub
+      - name: Commit changes
         run: |
-          git config --global user.name "github-actions"
+          git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add data/users.json
-          git commit -m "Add user ${{ steps.parse.outputs.username }}"
+          git commit -m "Update users.json with new registration"
           git push
+
 ```
 
 ---
 
 ### 🚀 How to Use
 
-1. ✅ Push all this to your GitHub repo.
-2. ✅ Go to `https://YOUR_USERNAME.github.io/YOUR_REPO/` (GitHub Pages must be enabled).
-3. 📝 Fill out the form and click **Register**.
-4. 🧾 A GitHub Issue opens — click **Submit new issue**.
-5. 🔄 GitHub Action runs and updates `data/users.json`.
+1. 🌐 Start your backend node server by typing `npm start`
+2. ✅ Push all this to your GitHub repo.
+3. ✅ Go to `https://YOUR_USERNAME.github.io/YOUR_REPO/` (GitHub Pages must be enabled).
+4. 🔄 GitHub Action runs and updates `data/users.json`.
 
 ---
 
@@ -323,6 +342,10 @@ To run the backend server, navigate to your project folder in your terminal and 
 
 ```bash
 node server.js
+```
+or
+```bash
+npm start
 ```
 
 The server will start and listen on `http://localhost:3000`.
