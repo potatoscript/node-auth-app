@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🎉 Dashboard</title>
+</head>
+<body>
+  <h1>🎉 Hello <span id="user"></span>!</h1>
+  <button onclick="logout()">🚪 Logout</button>
+
+  <script>
+    const user = localStorage.getItem('authUser');
+    if (!user) window.location.href = 'index.html';
+    document.getElementById('user').textContent = user;
+
+    function logout() {
+      localStorage.removeItem('authUser');
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
