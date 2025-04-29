@@ -2,7 +2,7 @@ name: Update Users JSON
 
 on:
   issues:
-    types: [opened]  # Trigger action when an issue is created
+    types: [opened] # Trigger action when an issue is created
 
 jobs:
   update-users-json:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: "14"
 
       # Install dependencies
       - name: Install dependencies
@@ -26,13 +26,13 @@ jobs:
       - name: Update users.json file
         run: node js/update-users.js
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Pass the secret to the script
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Pass the secret to the script
 
       # Commit and push changes to GitHub
       - name: Commit changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add data/users.json
+          git add .
           git commit -m "Update users.json with new registration"
           git push
