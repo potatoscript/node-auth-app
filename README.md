@@ -17,6 +17,7 @@
 |------------------------------------------------|
 | [🗂 Folder Structure](https://github.com/potatoscript/node-auth-app/wiki/Folder-Structure) |
 | [💾 Load User Data](https://github.com/potatoscript/node-auth-app/wiki/Load-User-Data) |
+| [⏱️ Short Polling](https://github.com/potatoscript/node-auth-app/wiki/Short-Polling) |
 
 ### 🚀 How to Use
 
