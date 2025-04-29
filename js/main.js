@@ -29,7 +29,43 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         alert('Registration submitted successfully!');
         form.reset();
-        await loadUsers(); // Refresh user table after successful registration
+        
+        // Start polling to check if the new user appears
+        const maxRetries = 12; // e.g., 12 tries * 5s = 60 seconds max
+        const intervalMs = 5000; // 5 seconds
+        let retries = 0;
+      
+        const usernameToFind = payload.username;
+      
+        const pollForUser = async () => {
+          retries++;
+      
+          try {
+            const response = await fetch('http://localhost:3000/users');
+            const users = await response.json();
+      
+            const found = users.some(user => user.username === usernameToFind);
+      
+            if (found) {
+              console.log('✅ New user found in users.json! Refreshing table...');
+              await loadUsers();
+              clearInterval(polling); // Stop polling
+            } else {
+              console.log(`⏳ New user not found yet... (retry ${retries}/${maxRetries})`);
+              if (retries >= maxRetries) {
+                clearInterval(polling);
+                alert('New user not found after waiting. Please refresh manually later.');
+              }
+            }
+          } catch (error) {
+            console.error('Error polling users:', error);
+            clearInterval(polling);
+            alert('Error occurred during polling.');
+          }
+        };
+      
+        const polling = setInterval(pollForUser, intervalMs);
+      
       } else {
         alert('Failed to submit registration.');
       }
