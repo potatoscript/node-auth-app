@@ -1,9 +1,17 @@
 ## 🎯 **Complete working minimal authentication app** using:
-
-- ✅ A simple HTML form  
-- ✅ GitHub Issues to "register" a user  
-- ✅ GitHub Actions to write that user into `data/users.json`  
-- ✅ With node express server as local backend
+<table>
+  <tr>
+    <td align="left" width="50%">
+      - ✅ A simple HTML form  <br><br>
+      - ✅ GitHub Issues to "register" a user <br><br>  
+      - ✅ GitHub Actions to write that user into `data/users.json` <br><br>  
+      - ✅ With node express server as local backend<br><br><br><br>
+    </td>
+    <td align="left" width="50%">
+      <img src="https://github.com/potatoscript/MyDocuments/blob/main/node-auth-app.png?raw=true" width="450" />
+    </td>
+  </tr>
+</table>
 
 ---
 
