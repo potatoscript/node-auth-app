@@ -13,12 +13,10 @@
   </tr>
 </table>
 
-# 🚀 **Project Menu**   
-
-| Title |
+| 🚀 **Project Menu**  |
 |------------------------------------------------|
 | [🗂 Folder Structure](https://github.com/potatoscript/node-auth-app/wiki/Folder-Structure) |
-| [🗂 Load User Data](https://github.com/potatoscript/node-auth-app/wiki/Load-User-Data) |
+| [💾 Load User Data](https://github.com/potatoscript/node-auth-app/wiki/Load-User-Data) |
 
 ### 🚀 How to Use
 
