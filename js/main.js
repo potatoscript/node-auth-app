@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to load users and display them in the table
 async function loadUsers() {
   try {
-    const response = await fetch('http://localhost:3000/users');
+    //const response = await fetch('http://localhost:3000/users');
+    const response = await fetch(`/data/users.json?t=${Date.now()}`); // 👈 Force new fetch
     const users = await response.json();
 
     const tableBody = document.querySelector('#users-table tbody');
