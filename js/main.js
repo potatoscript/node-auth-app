@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadUsers() {
   try {
     //const response = await fetch('http://localhost:3000/users');
-    const response = await fetch(`/data/users.json?t=${Date.now()}`); // 👈 Force new fetch
+    const response = await fetch(`../data/users.json?t=${Date.now()}`); // 👈 Force new fetch
     const users = await response.json();
 
     const tableBody = document.querySelector('#users-table tbody');
