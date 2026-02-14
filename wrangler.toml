@@ -1,0 +1,4 @@
+name = "node-auth-app"
+main = "worker.js"
+compatibility_date = "2026-02-14"
+node_compat = true
