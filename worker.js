@@ -2,28 +2,26 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
 
-    if (req.method === "OPTIONS") {
+    if (req.method === "OPTIONS")
       return new Response("", { headers: cors() });
-    }
 
     try {
 
-      // ========= REGISTER =========
+      // ===== REGISTER =====
       if (url.pathname === "/register" && req.method === "POST") {
         const { username, password } = await req.json();
-
         const hashed = await hash(password);
 
         await env.DB.prepare(
-          "INSERT INTO users (username, password) VALUES (?, ?)"
-        ).bind(username, hashed).run();
+          "INSERT INTO users (username,password,role) VALUES (?,?,?)"
+        ).bind(username, hashed, "user").run();
 
-        return json({ success: true });
+        return json({ success:true });
       }
 
-      // ========= LOGIN =========
+      // ===== LOGIN =====
       if (url.pathname === "/login" && req.method === "POST") {
-        const { username, password } = await req.json();
+        const { username,password } = await req.json();
 
         const user = await env.DB.prepare(
           "SELECT * FROM users WHERE username=?"
@@ -31,22 +29,34 @@ export default {
 
         if (!user) return json({ success:false });
 
-        const ok = await verify(password, user.password);
+        const ok = await verify(password,user.password);
+        if (!ok) return json({ success:false });
 
-        return json({ success: ok });
+        return json({
+          success:true,
+          role:user.role
+        });
       }
 
-      // ========= GET USERS =========
+      // ===== USERS (ADMIN ONLY) =====
       if (url.pathname === "/users") {
-        const { results } = await env.DB.prepare(
-          "SELECT id, username FROM users"
-        ).all();
+        const role = req.headers.get("x-role");
+        if (role !== "admin")
+          return json({ error:"Unauthorized" });
+
+        const { results } = await env.DB
+          .prepare("SELECT id,username FROM users")
+          .all();
 
         return json(results);
       }
 
-      // ========= DELETE =========
+      // ===== DELETE (ADMIN ONLY) =====
       if (url.pathname.startsWith("/delete/")) {
+        const role = req.headers.get("x-role");
+        if (role !== "admin")
+          return json({ error:"Unauthorized" });
+
         const id = url.pathname.split("/")[2];
 
         await env.DB.prepare(
@@ -56,20 +66,9 @@ export default {
         return json({ success:true });
       }
 
-      // ========= EDIT =========
-      if (url.pathname === "/edit" && req.method==="POST") {
-        const { id, username } = await req.json();
+      return new Response("Not found",{status:404});
 
-        await env.DB.prepare(
-          "UPDATE users SET username=? WHERE id=?"
-        ).bind(username,id).run();
-
-        return json({ success:true });
-      }
-
-      return new Response("Not found", { status:404 });
-
-    } catch(e) {
+    } catch(e){
       return json({ error:e.toString() });
     }
   }
@@ -80,7 +79,7 @@ export default {
 function cors(){
   return {
     "Access-Control-Allow-Origin":"*",
-    "Access-Control-Allow-Headers":"Content-Type",
+    "Access-Control-Allow-Headers":"Content-Type,x-role",
     "Access-Control-Allow-Methods":"GET,POST,DELETE,OPTIONS"
   };
 }
@@ -91,14 +90,14 @@ function json(data){
   });
 }
 
-// ===== Hashing =====
-
 async function hash(str){
   const buf = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(str)
   );
-  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  return Array.from(new Uint8Array(buf))
+    .map(b=>b.toString(16).padStart(2,"0"))
+    .join("");
 }
 
 async function verify(input,stored){

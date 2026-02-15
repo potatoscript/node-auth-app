@@ -1,91 +1,82 @@
-// ===== CONFIG =====
-const API = "https://node-auth-app.potatoscript-com.workers.dev"; 
-// 👆 replace if your worker URL is different
+const API = "https://node-auth-app.potatoscript-com.workers.dev";
 
+let currentRole = null;
 
 // ===== REGISTER =====
 document.getElementById("register-form")
-.addEventListener("submit", async (e) => {
+.addEventListener("submit", async (e)=>{
   e.preventDefault();
 
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
 
-  if (!username || !password) {
-    alert("Fill all fields");
+  await fetch(`${API}/register`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({username,password})
+  });
+
+  alert("Registered!");
+  e.target.reset();
+});
+
+// ===== LOGIN =====
+async function login(){
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  const res = await fetch(`${API}/login`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({username,password})
+  });
+
+  const data = await res.json();
+
+  if(!data.success){
+    alert("Login failed");
     return;
   }
 
-  try {
-    const res = await fetch(`${API}/register`, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ username, password })
-    });
+  currentRole = data.role;
+  alert("Login success as "+currentRole);
 
-    const data = await res.json();
-
-    if (data.success) {
-      alert("✅ Registered!");
-      e.target.reset();
-      loadUsers(); // auto refresh table
-    } else {
-      alert("❌ Failed");
-    }
-
-  } catch(err){
-    alert("Server error");
-    console.error(err);
-  }
-});
-
-
-// ===== LOAD USERS =====
-async function loadUsers(){
-  try{
-    const res = await fetch(`${API}/users`);
-    const users = await res.json();
-
-    const tbody = document.querySelector("#users-table tbody");
-    tbody.innerHTML = "";
-
-    if (!users.length){
-      tbody.innerHTML = `<tr><td colspan="3" class="empty">No users yet</td></tr>`;
-      return;
-    }
-
-    users.forEach(u=>{
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${u.id}</td>
-        <td>${u.username}</td>
-        <td class="actions">
-          <button onclick="deleteUser(${u.id})">Delete</button>
-        </td>
-      `;
-
-      tbody.appendChild(row);
-    });
-
-  } catch(err){
-    console.error(err);
-    alert("Failed loading users");
-  }
+  if(currentRole==="admin")
+    loadUsers();
 }
 
+// ===== LOAD USERS (ADMIN ONLY) =====
+async function loadUsers(){
+  if(currentRole!=="admin") return;
 
-// ===== DELETE USER =====
+  const res = await fetch(`${API}/users`,{
+    headers:{"x-role":"admin"}
+  });
+
+  const users = await res.json();
+
+  const tbody = document.querySelector("#users-table tbody");
+  tbody.innerHTML="";
+
+  users.forEach(u=>{
+    const row=document.createElement("tr");
+
+    row.innerHTML=`
+      <td>${u.id}</td>
+      <td>${u.username}</td>
+      <td><button onclick="deleteUser(${u.id})">Delete</button></td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+// ===== DELETE =====
 async function deleteUser(id){
-  if (!confirm("Delete this user?")) return;
-
   await fetch(`${API}/delete/${id}`,{
-    method:"DELETE"
+    method:"DELETE",
+    headers:{"x-role":"admin"}
   });
 
   loadUsers();
 }
-
-
-// ===== INITIAL LOAD =====
-loadUsers();
