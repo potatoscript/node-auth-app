@@ -3,3 +3,8 @@ main = "worker.js"
 compatibility_date = "2026-02-14"
 
 compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "users-db"
+database_id = "d371469a-95b5-4807-b581-efef8ed66a21"
