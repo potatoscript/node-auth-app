@@ -1,114 +1,79 @@
-document.addEventListener('DOMContentLoaded', () => {
+const API="https://node-auth-app.potatoscript-com.workers.dev";
 
-  const API = "https://node-auth-app.potatoscript-com.workers.dev";
+// ===== REGISTER =====
+document.getElementById("register-form").onsubmit=async e=>{
+  e.preventDefault();
 
-  const form = document.getElementById('register-form');
-
-  // =========================
-  // REGISTER
-  // =========================
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-
-    if (!username || !password) {
-      alert('Please fill out both fields.');
-      return;
-    }
-
-    const payload = { username, password };
-
-    try {
-      const response = await fetch(`${API}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        alert('Registration failed.');
-        return;
-      }
-
-      alert('Registration successful!');
-      form.reset();
-
-      startPollingForNewUser(username);
-
-    } catch (err) {
-      console.error(err);
-      alert('Network error.');
-    }
+  await fetch(API+"/register",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      username:username.value,
+      password:password.value
+    })
   });
 
-  // =========================
-  // POLLING AFTER REGISTER
-  // =========================
-  function startPollingForNewUser(usernameToFind) {
+  alert("Registered!");
+  load();
+};
 
-    const maxRetries = 12;
-    const intervalMs = 5000;
-    let retries = 0;
+// ===== LOGIN =====
+document.getElementById("login-form").onsubmit=async e=>{
+  e.preventDefault();
 
-    const polling = setInterval(async () => {
-      retries++;
+  const r=await fetch(API+"/login",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      username:luser.value,
+      password:lpass.value
+    })
+  });
 
-      try {
-        const res = await fetch(`${API}/users`);
-        const users = await res.json();
+  const d=await r.json();
+  alert(d.success?"Login OK":"Login Fail");
+};
 
-        const found = users.some(u => u.username === usernameToFind);
+// ===== LOAD USERS =====
+async function load(){
+  const r=await fetch(API+"/users");
+  const data=await r.json();
 
-        if (found) {
-          console.log("✅ User found, refreshing table");
-          loadUsers();
-          clearInterval(polling);
-        }
+  users.innerHTML="";
 
-        if (retries >= maxRetries) {
-          clearInterval(polling);
-          alert("User not found yet. Try refreshing later.");
-        }
+  data.forEach(u=>{
+    users.innerHTML+=`
+      <tr>
+        <td>${u.username}</td>
+        <td>
+          <button class="action-btn"
+            onclick="edit(${u.id},'${u.username}')">Edit</button>
+          <button class="action-btn delete-btn"
+            onclick="del(${u.id})">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
 
-      } catch (err) {
-        console.error(err);
-        clearInterval(polling);
-      }
+// ===== DELETE =====
+async function del(id){
+  await fetch(API+"/delete/"+id);
+  load();
+}
 
-    }, intervalMs);
-  }
+// ===== EDIT =====
+async function edit(id,name){
+  const n=prompt("New username:",name);
+  if(!n) return;
 
-  // =========================
-  // LOAD USERS TABLE
-  // =========================
-  async function loadUsers() {
-    try {
-      const response = await fetch(`${API}/users`);
-      const users = await response.json();
+  await fetch(API+"/edit",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({id,username:n})
+  });
 
-      const tableBody = document.querySelector('#users-table tbody');
-      tableBody.innerHTML = '';
+  load();
+}
 
-      users.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${user.username}</td>
-          <td>${user.password}</td>
-        `;
-        tableBody.appendChild(row);
-      });
-
-    } catch (err) {
-      console.error(err);
-      alert('Failed to load users.');
-    }
-  }
-
-  // =========================
-  // INITIAL LOAD
-  // =========================
-  loadUsers();
-
-});
+load();

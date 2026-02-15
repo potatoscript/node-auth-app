@@ -1,43 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Mini Auth App</title>
-  <style>
-    body { font-family: sans-serif; margin: 2em; }
-    label, input { display: block; margin-bottom: 1em; }
-    button { padding: 0.5em 1em; }
-    table { margin-top: 2em; border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 0.5em; text-align: left; }
-  </style>
+<meta charset="UTF-8">
+<title>Auth App</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:#f4f6f8;
+  display:flex;
+  justify-content:center;
+}
+
+.container{
+  width:420px;
+  background:white;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+h1{text-align:center;}
+
+input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  background:#4CAF50;
+  color:white;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+button:hover{opacity:0.9;}
+
+table{
+  width:100%;
+  margin-top:20px;
+  border-collapse:collapse;
+}
+
+td,th{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+}
+
+.action-btn{
+  padding:5px 8px;
+  margin-right:5px;
+  background:#2196F3;
+}
+.delete-btn{background:#f44336;}
+</style>
 </head>
+
 <body>
-  <h1>🧑‍💻 Register</h1>
-  <form id="register-form">
-    <label>
-      Username:
-      <input type="text" id="username" required />
-    </label>
-    <label>
-      Password:
-      <input type="password" id="password" required />
-    </label>
-    <button type="submit">Register</button>
-  </form>
 
-  <h2>📄 Registered Users</h2>
-  <table id="users-table">
-    <thead>
-      <tr>
-        <th>Username</th>
-        <th>Password</th> <!-- Warning: For learning only! Don't show passwords publicly in real apps! -->
-      </tr>
-    </thead>
-    <tbody>
-      <!-- User rows will be inserted here by JavaScript -->
-    </tbody>
-  </table>
+<div class="container">
 
-  <script src="js/main.js"></script>
+<h1>🔐 Mini Auth</h1>
+
+<h3>Register</h3>
+<form id="register-form">
+<input id="username" placeholder="Username" required>
+<input id="password" type="password" placeholder="Password" required>
+<button>Register</button>
+</form>
+
+<h3>Login</h3>
+<form id="login-form">
+<input id="luser" placeholder="Username">
+<input id="lpass" type="password" placeholder="Password">
+<button>Login</button>
+</form>
+
+<h3>Users</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Action</th></tr>
+</thead>
+<tbody id="users"></tbody>
+</table>
+
+</div>
+
+<script src="js/main.js"></script>
 </body>
 </html>
