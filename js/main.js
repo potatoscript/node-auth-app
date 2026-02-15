@@ -1,7 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+  const API = "https://node-auth-app.potatoscript-com.workers.dev";
+
   const form = document.getElementById('register-form');
 
-  form.addEventListener('submit', async function (e) {
+  // =========================
+  // REGISTER
+  // =========================
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const username = document.getElementById('username').value.trim();
@@ -12,93 +18,97 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const payload = {
-      username: username,
-      password: password
-    };
+    const payload = { username, password };
 
     try {
-      const response = await fetch('http://localhost:3000/register', {
+      const response = await fetch(`${API}/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      if (response.ok) {
-        alert('Registration submitted successfully!');
-        form.reset();
-        
-        // Start polling to check if the new user appears
-        const maxRetries = 12; // e.g., 12 tries * 5s = 60 seconds max
-        const intervalMs = 5000; // 5 seconds
-        let retries = 0;
-      
-        const usernameToFind = payload.username;
-      
-        const pollForUser = async () => {
-          retries++;
-      
-          try {
-            const response = await fetch('http://localhost:3000/users');
-            const users = await response.json();
-      
-            const found = users.some(user => user.username === usernameToFind);
-      
-            if (found) {
-              console.log('✅ New user found in users.json! Refreshing table...');
-              await loadUsers();
-              clearInterval(polling); // Stop polling
-            } else {
-              console.log(`⏳ New user not found yet... (retry ${retries}/${maxRetries})`);
-              if (retries >= maxRetries) {
-                clearInterval(polling);
-                alert('New user not found after waiting. Please refresh manually later.');
-              }
-            }
-          } catch (error) {
-            console.error('Error polling users:', error);
-            clearInterval(polling);
-            alert('Error occurred during polling.');
-          }
-        };
-      
-        const polling = setInterval(pollForUser, intervalMs);
-      
-      } else {
-        alert('Failed to submit registration.');
+      if (!response.ok) {
+        alert('Registration failed.');
+        return;
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred.');
+
+      alert('Registration successful!');
+      form.reset();
+
+      startPollingForNewUser(username);
+
+    } catch (err) {
+      console.error(err);
+      alert('Network error.');
     }
   });
 
-// Function to load users and display them in the table
-async function loadUsers() {
-  try {
-    const response = await fetch('http://localhost:3000/users');
-    const users = await response.json();
+  // =========================
+  // POLLING AFTER REGISTER
+  // =========================
+  function startPollingForNewUser(usernameToFind) {
 
-    const tableBody = document.querySelector('#users-table tbody');
-    tableBody.innerHTML = '';  // Clear the existing table rows
+    const maxRetries = 12;
+    const intervalMs = 5000;
+    let retries = 0;
 
-    // Populate the table with user data
-    users.forEach(user => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${user.username}</td>
-        <td>${user.password}</td>
-      `;
-      tableBody.appendChild(row);
-    });
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    alert('Failed to load user data.');
+    const polling = setInterval(async () => {
+      retries++;
+
+      try {
+        const res = await fetch(`${API}/users`);
+        const users = await res.json();
+
+        const found = users.some(u => u.username === usernameToFind);
+
+        if (found) {
+          console.log("✅ User found, refreshing table");
+          loadUsers();
+          clearInterval(polling);
+        }
+
+        if (retries >= maxRetries) {
+          clearInterval(polling);
+          alert("User not found yet. Try refreshing later.");
+        }
+
+      } catch (err) {
+        console.error(err);
+        clearInterval(polling);
+      }
+
+    }, intervalMs);
   }
-}
 
-// Load users when the page is first loaded
-window.onload = loadUsers;
+  // =========================
+  // LOAD USERS TABLE
+  // =========================
+  async function loadUsers() {
+    try {
+      const response = await fetch(`${API}/users`);
+      const users = await response.json();
+
+      const tableBody = document.querySelector('#users-table tbody');
+      tableBody.innerHTML = '';
+
+      users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${user.username}</td>
+          <td>${user.password}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load users.');
+    }
+  }
+
+  // =========================
+  // INITIAL LOAD
+  // =========================
+  loadUsers();
+
 });
