@@ -9,7 +9,12 @@ export default {
 
       // ===== REGISTER =====
       if (url.pathname === "/register" && req.method === "POST") {
-        const { username, password } = await req.json();
+        let { username, password } = await req.json();
+
+        // Normalize input
+        username = username.trim().toLowerCase();
+        password = password.trim();
+
         const hashed = await hash(password);
 
         await env.DB.prepare(
@@ -21,31 +26,38 @@ export default {
 
       // ===== LOGIN =====
       if (url.pathname === "/login" && req.method === "POST") {
-        const { username,password } = await req.json();
+        let { username,password } = await req.json();
+
+        username = username.trim().toLowerCase();
+        password = password.trim();
 
         const user = await env.DB.prepare(
           "SELECT * FROM users WHERE username=?"
         ).bind(username).first();
 
-        if (!user) return json({ success:false });
+        if (!user)
+          return json({ success:false });
 
         const ok = await verify(password,user.password);
-        if (!ok) return json({ success:false });
+
+        if (!ok)
+          return json({ success:false });
 
         return json({
           success:true,
-          role:user.role
+          role:user.role || "user"
         });
       }
 
       // ===== USERS (ADMIN ONLY) =====
       if (url.pathname === "/users") {
         const role = req.headers.get("x-role");
+
         if (role !== "admin")
           return json({ error:"Unauthorized" });
 
         const { results } = await env.DB
-          .prepare("SELECT id,username FROM users")
+          .prepare("SELECT id,username,role FROM users")
           .all();
 
         return json(results);
@@ -54,6 +66,7 @@ export default {
       // ===== DELETE (ADMIN ONLY) =====
       if (url.pathname.startsWith("/delete/")) {
         const role = req.headers.get("x-role");
+
         if (role !== "admin")
           return json({ error:"Unauthorized" });
 
@@ -95,11 +108,12 @@ async function hash(str){
     "SHA-256",
     new TextEncoder().encode(str)
   );
+
   return Array.from(new Uint8Array(buf))
     .map(b=>b.toString(16).padStart(2,"0"))
     .join("");
 }
 
 async function verify(input,stored){
-  return (await hash(input))===stored;
+  return (await hash(input)) === stored;
 }
