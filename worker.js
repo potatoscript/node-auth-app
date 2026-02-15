@@ -1,28 +1,72 @@
+// ✅ ADD CORS OBJECT AT TOP
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+
 export default {
-  async fetch(request) {
-    const url = new URL(request.url);
+  async fetch(req, env) {
+    const url = new URL(req.url);
 
-    // LOGIN API
-    if (url.pathname === "/api/login" && request.method === "POST") {
-      const body = await request.json();
-
-      const { username, password } = body;
-
-      if (username === "admin" && password === "1234") {
-        return new Response(JSON.stringify({
-          success: true,
-          message: "Login OK"
-        }), {
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      return new Response(JSON.stringify({
-        success: false,
-        message: "Invalid"
-      }), { status: 401 });
+    // ✅ HANDLE PREFLIGHT (MUST BE FIRST)
+    if (req.method === "OPTIONS") {
+      return new Response(null, { headers: cors });
     }
 
-    return new Response("Not Found", { status: 404 });
+    // ======================
+    // REGISTER
+    // ======================
+    if (url.pathname === "/register" && req.method === "POST") {
+      const { username, password } = await req.json();
+
+      try {
+        await env.DB
+          .prepare("INSERT INTO users (username, password) VALUES (?, ?)")
+          .bind(username, password)
+          .run();
+
+        // ✅ ADD CORS HERE
+        return new Response(JSON.stringify({ success: true }), {
+          headers: {
+            "Content-Type": "application/json",
+            ...cors
+          }
+        });
+
+      } catch {
+        return new Response(JSON.stringify({ error: "User exists" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            ...cors
+          }
+        });
+      }
+    }
+
+    // ======================
+    // GET USERS
+    // ======================
+    if (url.pathname === "/users") {
+      const { results } = await env.DB
+        .prepare("SELECT username, password FROM users")
+        .all();
+
+      // ✅ ADD CORS HERE
+      return new Response(JSON.stringify(results), {
+        headers: {
+          "Content-Type": "application/json",
+          ...cors
+        }
+      });
+    }
+
+    // ======================
+    // NOT FOUND
+    // ======================
+    return new Response("Not found", {
+      status: 404,
+      headers: cors // ✅ ALSO HERE
+    });
   }
 };
