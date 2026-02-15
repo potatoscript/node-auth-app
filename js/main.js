@@ -1,79 +1,91 @@
-const API="https://node-auth-app.potatoscript-com.workers.dev";
+// ===== CONFIG =====
+const API = "https://node-auth-app.potatoscript-com.workers.dev"; 
+// 👆 replace if your worker URL is different
+
 
 // ===== REGISTER =====
-document.getElementById("register-form").onsubmit=async e=>{
+document.getElementById("register-form")
+.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  await fetch(API+"/register",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      username:username.value,
-      password:password.value
-    })
-  });
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-  alert("Registered!");
-  load();
-};
+  if (!username || !password) {
+    alert("Fill all fields");
+    return;
+  }
 
-// ===== LOGIN =====
-document.getElementById("login-form").onsubmit=async e=>{
-  e.preventDefault();
+  try {
+    const res = await fetch(`${API}/register`, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ username, password })
+    });
 
-  const r=await fetch(API+"/login",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      username:luser.value,
-      password:lpass.value
-    })
-  });
+    const data = await res.json();
 
-  const d=await r.json();
-  alert(d.success?"Login OK":"Login Fail");
-};
+    if (data.success) {
+      alert("✅ Registered!");
+      e.target.reset();
+      loadUsers(); // auto refresh table
+    } else {
+      alert("❌ Failed");
+    }
+
+  } catch(err){
+    alert("Server error");
+    console.error(err);
+  }
+});
+
 
 // ===== LOAD USERS =====
-async function load(){
-  const r=await fetch(API+"/users");
-  const data=await r.json();
+async function loadUsers(){
+  try{
+    const res = await fetch(`${API}/users`);
+    const users = await res.json();
 
-  users.innerHTML="";
+    const tbody = document.querySelector("#users-table tbody");
+    tbody.innerHTML = "";
 
-  data.forEach(u=>{
-    users.innerHTML+=`
-      <tr>
+    if (!users.length){
+      tbody.innerHTML = `<tr><td colspan="3" class="empty">No users yet</td></tr>`;
+      return;
+    }
+
+    users.forEach(u=>{
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${u.id}</td>
         <td>${u.username}</td>
-        <td>
-          <button class="action-btn"
-            onclick="edit(${u.id},'${u.username}')">Edit</button>
-          <button class="action-btn delete-btn"
-            onclick="del(${u.id})">Delete</button>
+        <td class="actions">
+          <button onclick="deleteUser(${u.id})">Delete</button>
         </td>
-      </tr>
-    `;
-  });
+      `;
+
+      tbody.appendChild(row);
+    });
+
+  } catch(err){
+    console.error(err);
+    alert("Failed loading users");
+  }
 }
 
-// ===== DELETE =====
-async function del(id){
-  await fetch(API+"/delete/"+id);
-  load();
-}
 
-// ===== EDIT =====
-async function edit(id,name){
-  const n=prompt("New username:",name);
-  if(!n) return;
+// ===== DELETE USER =====
+async function deleteUser(id){
+  if (!confirm("Delete this user?")) return;
 
-  await fetch(API+"/edit",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({id,username:n})
+  await fetch(`${API}/delete/${id}`,{
+    method:"DELETE"
   });
 
-  load();
+  loadUsers();
 }
 
-load();
+
+// ===== INITIAL LOAD =====
+loadUsers();
